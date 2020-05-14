@@ -1,6 +1,8 @@
 """This program will allow users to create a maze"""
 
 from dataclasses import dataclass
+from datetime import datetime
+from random import random, seed, getrandbits
 
 @dataclass
 class Point:
@@ -112,12 +114,36 @@ class Maze():
         except TypeError:
             print("ERROR: Invalid position arguments! Couldn't add wall!")
 
+    def generate_maze(self):
+        """Generates a maze randomly"""
+
+        seed(datetime.now())
+
+        for y in range(self.height):
+            for x in range(self.width):
+                # Entrance/ exit tile always empty
+                if y is 0 and x == self.entrance_x - 1 or y is self.height - 1 and x == self.exit_x - 1:
+                    continue
+
+                top_taken = y == 0 or self.maze_body[y-1][x]
+                left_taken = x == 0 or self.maze_body[y][x-1]
+                top_left_taken = x == 0 or y == 0 or self.maze_body[y-1][x-1]
+                top_right_taken = x == self.width-1 or y == 0 or self.maze_body[y-1][x+1]
+
+                if not top_taken or not left_taken:
+                    self.place_wall_random(x,y)
+
+    def place_wall_random(self, x, y):
+        """Places a wall randomly at x and y"""
+        if getrandbits(1):
+            self.maze_body[y][x] = True
+
 MAZE = Maze('#', ' ', 15, 15)
 
 MAZE.set_entrance(2)
 
-MAZE.add_wall_horizontal(10, 14, 1)
-
 MAZE.set_exit(8)
+
+MAZE.generate_maze()
 
 MAZE.print_walls()
