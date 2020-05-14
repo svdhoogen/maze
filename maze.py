@@ -52,18 +52,18 @@ class Maze():
 
     def set_entrance(self, entrance_x):
         """Sets entrance for maze. This will be at top only for now"""
-        if self.__validate_opening(entrance_x + 1):
-            self.entrance_x = entrance_x + 1
+        if self.__validate_opening(entrance_x):
+            self.entrance_x = entrance_x
 
     def set_exit(self, exit_x):
         """Sets exit for maze. This will be at bottom only for now"""
-        if self.__validate_opening(exit_x + 1):
-            self.exit_x = exit_x + 1
+        if self.__validate_opening(exit_x):
+            self.exit_x = exit_x
 
     def __validate_opening(self, pos_x):
         """Validates a to check whether it conforms to maze bounds"""
         try:
-            if pos_x < 0 or pos_x > self.width:
+            if pos_x < 1 or pos_x > self.width:
                 print("ERROR: Opening x is out of range! Couldn't add opening!")
                 return False
 
@@ -72,39 +72,37 @@ class Maze():
         except TypeError:
             print("ERROR: Invalid opening x argument! Couldn't add opening!")
 
-    def add_wall_horizontal(self, start_x, end_x, pos_y):
+    def add_wall_horizontal(self, pos_x, pos_y, width):
         """Adds a horizontal wall from start to end x, at y"""
-        wall = Line(Point(start_x, pos_y), Point(end_x, pos_y))
+        wall = Line(Point(pos_x, pos_y), Point(pos_x + width, pos_y))
 
         if self.__validate_wall(wall):
             for pos_x in range(wall.start.pos_x, wall.end.pos_x):
                 self.maze_body[wall.start.pos_y][pos_x] = True
 
-    def add_wall_vertical(self, start_y, end_y, pos_x):
+    def add_wall_vertical(self, pos_x, pos_y, height):
         """Adds a vertical wall from start to end y, at x"""
-        wall = Line(Point(pos_x, start_y), Point(pos_x, end_y))
+        wall = Line(Point(pos_x, pos_y), Point(pos_x, pos_y + height))
 
         if self.__validate_wall(wall):
             for pos_y in range(wall.start.pos_y, wall.end.pos_y):
                 self.maze_body[pos_y][wall.start.pos_x] = True
 
-    def __validate_wall(self, line):
+    def __validate_wall(self, wall):
         """Validates a wall to check whether it conforms to maze bounds"""
         try:
-            if line.start.pos_x < 0 or line.start.pos_x > self.width:
-                print("ERROR: Start pos x is invalid! Couldn't add wall!")
+            if wall.start.pos_x < 0 or wall.end.pos_x > self.width or wall.start.pos_x > wall.end.pos_x:
+                print("ERROR: Pos x is out of bounds! Couldn't add wall! Start: {}, end: {}"
+                        .format(wall.start.pos_x, wall.end.pos_x))
                 return False
 
-            if line.start.pos_y < 0 or line.start.pos_y > self.height:
-                print("ERROR: Start pos y is invalid! Couldn't add wall!")
+            if wall.start.pos_y < 0 or wall.start.pos_y > self.height or wall.start.pos_y > wall.end.pos_y:
+                print("ERROR: Pos y is out of bounds! Couldn't add wall! Start: {}, end: {}"
+                        .format(wall.start.pos_y, wall.end.pos_y))
                 return False
 
-            if line.end.pos_x < 0 or line.end.pos_x > self.width:
-                print("ERROR: End pos x is invalid! Couldn't add wall!")
-                return False
-
-            if line.end.pos_y < 0 or line.start.pos_y > self.height:
-                print("ERROR: End pos y is invalid! Couldn't add wall!")
+            if wall.start.pos_x == wall.end.pos_x and wall.start.pos_y == wall.end.pos_y:
+                print ("ERROR: Start and end position is identical! Couldn't add wall!")
                 return False
 
             return True
@@ -116,7 +114,10 @@ class Maze():
 
 MAZE = Maze('#', ' ', 15, 15)
 
-MAZE.set_entrance(14)
+MAZE.set_entrance(2)
+
+MAZE.add_wall_horizontal(10, 14, 1)
+
 MAZE.set_exit(8)
 
 MAZE.print_walls()
