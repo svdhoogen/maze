@@ -26,6 +26,12 @@ class Tile:
     south_enabled: None
     west_enabled: None
 
+@dataclass
+class NeighboringTile:
+    """A neighboring tile object, has a tile object and a direction, from the perspective of the original tile, 0 being north, 1 east, 2 south and 3 west"""
+    tile: Tile
+    direction: None
+
 class Maze():
     """The maze object itself"""
     wall_char = None
@@ -42,7 +48,7 @@ class Maze():
         self.width = width
         self.height = height
 
-        # Init maze tiles
+        # Init maze tiles, all tiles have max walls
         self.maze_tiles = [[Tile(Point(x, y), False, True, True, True, True) for x in range(self.width)]for y in range(self.height)]
 
     def print_walls(self):
@@ -88,39 +94,99 @@ class Maze():
         # Make randomization random by seeding it
         seed(datetime.now())
 
-        tile = choice(choice(self.maze_tiles))
+        # Run the randomized depth first search algorithm to generate a maze
+        self.__run_depth_first_search(None, None)
 
-        neighbor_tiles = []
+    def __run_depth_first_search(self, start_tile, current_tile):
+        """Generates a maze using the randomized depth-first search algorithm"""
 
-        if (tile.loc.pos_x != 0):
-            neighbor_tiles.append(self.maze_tiles[tile.loc.pos_y][tile.loc.pos_x - 1])
+        print("looping...")
+        # Generation has finished, stop recursion
+        if start_tile and start_tile == current_tile:
+            print("done!")
+            return
 
-        if (tile.loc.pos_y != 0):
-            neighbor_tiles.append(self.maze_tiles[tile.loc.pos_y - 1][tile.loc.pos_x])
+        # Start the recurring loop by selecting a random starting tile
+        if not start_tile:
+            start_tile = choice(choice(self.maze_tiles))
+            current_tile = start_tile
 
-        if (tile.loc.pos_x != self.width - 1):
-            neighbor_tiles.append(self.maze_tiles[tile.loc.pos_y][tile.loc.pos_x + 1])
+        # Get neighboring tiles
+        neighboring_tile = self.__get_random_neighboring_tile(current_tile.loc.pos_x, current_tile.loc.pos_y)
 
-        if (tile.loc.pos_y != self.height - 1):
-            neighbor_tiles.append(self.maze_tiles[tile.loc.pos_y + 1][tile.loc.pos_x])
+        # Not empty, destory wall, set visited and update current tile
+        if neighboring_tile:
+            self.__remove_tiling_walls(current_tile, neighboring_tile.tile, neighboring_tile.direction)
+            current_tile.visited = True
+            current_tile = neighboring_tile.tile
+        
+        # No available neighboring tile, backtrack
+        else:
+            print("Todo: backtrack, endpoint: " + str(current_tile.loc.pos_x) + " " + str(current_tile.loc.pos_y))
+            return
 
-        # Todo: Check visited tiles
+        # Recursion
+        self.__run_depth_first_search(start_tile, current_tile)
 
-        newTile = choice(neighbor_tiles)
+    def __get_random_neighboring_tile(self, pos_x, pos_y):
+        """Returns a random neighboring tile based on x and y coords"""
+        neighboring_tiles = []
+        
+        # Western tile
+        if (pos_x != 0):
+            new_tile = self.maze_tiles[pos_y][pos_x - 1]
+            if (not new_tile.visited):
+                neighboring_tiles.append(NeighboringTile(new_tile, 3))
 
-        newTile.north_enabled = False
-        newTile.south_enabled = False
+        # Northern tile
+        if (pos_y != 0):
+            new_tile = self.maze_tiles[pos_y - 1][pos_x]
+            if (not new_tile.visited):
+                neighboring_tiles.append(NeighboringTile(new_tile, 0))
 
-        print(neighbor_tiles)
+        # Eastern tile
+        if (pos_x != self.width - 1):
+            new_tile = self.maze_tiles[pos_y][pos_x + 1]
+            if (not new_tile.visited):
+                neighboring_tiles.append(NeighboringTile(new_tile, 1))
 
+        # Southern tile
+        if (pos_y != self.height - 1):
+            new_tile = self.maze_tiles[pos_y + 1][pos_x]
+            if (not new_tile.visited):
+                neighboring_tiles.append(NeighboringTile(new_tile, 2))
 
+        # No non-visited neighboring tiles, return empty list
+        if not neighboring_tiles:
+            return neighboring_tiles
 
-    def place_wall_random(self, x, y):
-        """Places a wall randomly at x and y"""
-        if getrandbits(1):
-            self.maze_tiles[y][x] = True
+        # Return random neighboring tile
+        return choice(neighboring_tiles)
 
-MAZE = Maze('#', '.', 2, 2)
+    def __remove_tiling_walls(self, tile, dest_tile, direction):
+        """Removes the wall between tile and neighboring tile objects"""
+
+        # Destroy north wall
+        if (direction == 0):
+            tile.north_enabled = False
+            dest_tile.south_enabled = False
+
+        # Destroy east wall
+        elif (direction == 1):
+            tile.east_enabled = False
+            dest_tile.west_enabled = False
+
+        # Destroy south wall
+        elif (direction == 2):
+            tile.south_enabled = False
+            dest_tile.north_enabled = False
+
+        # Destroy west wall
+        elif (direction == 3):
+            tile.west_enabled = False
+            dest_tile.east_enabled = False
+
+MAZE = Maze('#', '.', 10, 10)
 
 MAZE.generate_maze()
 
