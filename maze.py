@@ -1,4 +1,4 @@
-"""This program will allow users to create a maze"""
+"""This program will generate a random maze using randomized depth-first search algorithm, and then creates an image based on the created mazes"""
 
 from dataclasses import dataclass
 from datetime import datetime
@@ -21,17 +21,17 @@ class Line:
 class Tile:
     """A maze tile object, has a point and visited property"""
     loc: Point
-    visited: None
-    north_enabled: None
-    east_enabled: None
-    south_enabled: None
-    west_enabled: None
+    visited: bool = False
+    north_enabled: bool = True
+    east_enabled: bool = True
+    south_enabled: bool = True
+    west_enabled: bool = True
 
 @dataclass
 class NeighboringTile:
     """A neighboring tile object, has a tile object and a direction, from the perspective of the original tile, 0 being north, 1 east, 2 south and 3 west"""
     tile: Tile
-    direction: None
+    direction: int
 
 class Maze():
     """The maze object"""
@@ -46,14 +46,18 @@ class Maze():
         self.width = width
         self.height = height
 
+        print("Initializing empty maze tiles...")
+
         # Init default maze tiles, all walls enabled
-        self.maze_tiles = [[Tile(Point(x, y), False, True, True, True, True) for x in range(self.width)]for y in range(self.height)]
+        self.maze_tiles = [[Tile(Point(x, y)) for x in range(self.width)]for y in range(self.height)]
 
         # Generate a new maze
         self.__generate_maze()
 
         # Create maze image
         self.__create_maze_image()
+
+        print("Program finished!")
 
     def __generate_maze(self):
         """Generates a maze randomly"""
@@ -67,52 +71,65 @@ class Maze():
     def __create_maze_image(self):
         """Prints current maze to console"""
 
+        print("Creating maze image...")
+
+        # Get pixels
+        pixels = self.__get_maze_pixels(0, 255)
+
+        # Create image from pixels
+        self.__create_image('maze.png', pixels, self.width * 2 + 1, self.height * 2 + 1)
+
+        print("Creating image done!")
+
+    def __get_maze_pixels(self, wall_value, tile_value):
+        """Creates maze pixels based on maze tiles"""
+
         # Contains the pixels used to create image, and image height and width
         pixels = []
-        pixels_width = self.width * 2 + 1
-        pixels_height = self.height * 2 + 1
-
-        wall_value = 0
-        tile_value = 255
 
         # Row below is a row without tiles but only walls only calculated on the final row of tileset
-        final_row = []
+        final_row_pixels = []
 
         # Determine row pixel data from maze tiles
         for row in self.maze_tiles:
-            row_above = [] # Row above is a row without tiles but only walls
-            current_row = [] # Current row is a row with tiles and walls
+            above_row_pixels = [] # Row above is a row without tiles but only walls
+            current_row_pixels = [] # Current row is a row with tiles and walls
 
-            # Loop through each row in maze tiles
+            # Get above, current and final row pixels
             for element in row:
-                row_above.append(wall_value)
-                row_above.append(wall_value if element.north_enabled else tile_value)
-                current_row.append(wall_value if element.west_enabled else tile_value)
-                current_row.append(tile_value)
+                above_row_pixels.extend([wall_value, wall_value if element.north_enabled else tile_value])
+                current_row_pixels.extend([wall_value if element.west_enabled else tile_value, tile_value])
 
                 # Final column in tiles
                 if (element.loc.pos_y == self.height - 1):
-                    final_row.append(wall_value)
-                    final_row.append(wall_value if element.south_enabled else tile_value)
+                    final_row_pixels.extend([wall_value, wall_value if element.south_enabled else tile_value])
 
                 # Final char of row, add east wall
                 if (element.loc.pos_x == self.width - 1):
-                    row_above.append(wall_value)
-                    current_row.append(wall_value if element.east_enabled else tile_value)
+                    above_row_pixels.append(wall_value)
+                    current_row_pixels.append(wall_value if element.east_enabled else tile_value)
 
-                    # Add wall to row_below if final column
+                    # Add wall to final row in final column
                     if (element.loc.pos_y == self.height - 1):
-                        final_row.append(wall_value)
+                        final_row_pixels.append(wall_value)
 
-            pixels += row_above
-            pixels += current_row
+            # Add above and current row to pixels
+            pixels += above_row_pixels
+            pixels += current_row_pixels
 
-        pixels += final_row
+        # Add final row to pixels
+        pixels += final_row_pixels
 
-        img = Image.new('L', (pixels_width, pixels_height))
+        return pixels
+
+    def __create_image(self, path, pixels, width, height):
+        """Creates image and saves it to path based on pixels and size"""
+
+        # Create image from pixels
+        img = Image.new('L', (width, height))
         img.putdata(pixels)
-        img.save('maze.png')
-    
+        img.save(path)
+
     def __run_depth_first_search(self):
         """Generates a maze using the randomized depth-first search algorithm"""
 
@@ -144,7 +161,7 @@ class Maze():
 
         self.__add_random_entrances()
 
-        print("Done!")
+        print("Depth-first search done!")
 
     def __get_random_neighboring_tile(self, pos_x, pos_y):
         """Returns a random neighboring tile based on x and y coords"""
@@ -210,11 +227,11 @@ class Maze():
         # Place horizontal entrance/ exits
         if getrandbits(1) == 0:
             choice(self.maze_tiles[0]).north_enabled = False
-            choice(self.maze_tiles[self.height - 1]).south_enabled = False
+            choice(self.maze_tiles[-1]).south_enabled = False
 
         # Place vertical entrance/ exits
         else:
             choice(self.maze_tiles)[0].west_enabled = False
-            choice(self.maze_tiles)[self.width - 1].east_enabled = False
+            choice(self.maze_tiles)[-1].east_enabled = False
 
-Maze(15, 15)
+Maze(1000, 1000)
