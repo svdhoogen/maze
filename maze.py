@@ -37,6 +37,7 @@ class Maze():
     wall_char = None
     space_char = None
     maze_tiles = None
+    backtrack_tiles = []
     width = None
     height = None
 
@@ -100,29 +101,38 @@ class Maze():
     def __run_depth_first_search(self, start_tile, current_tile):
         """Generates a maze using the randomized depth-first search algorithm"""
 
-        print("looping...")
+        print("Looping...")
+
         # Generation has finished, stop recursion
         if start_tile and start_tile == current_tile:
-            print("done!")
+            print("Finished!")
             return
 
-        # Start the recurring loop by selecting a random starting tile
+        # Start tile is empty, start the recurring loop by selecting a random starting tile
         if not start_tile:
+            print("Starting depth first search!")
             start_tile = choice(choice(self.maze_tiles))
             current_tile = start_tile
 
         # Get neighboring tiles
         neighboring_tile = self.__get_random_neighboring_tile(current_tile.loc.pos_x, current_tile.loc.pos_y)
 
-        # Not empty, destory wall, set visited and update current tile
+        # Not empty, destory wall, set tile visited, add visited tile to backtrack tiles and update current tile
         if neighboring_tile:
             self.__remove_tiling_walls(current_tile, neighboring_tile.tile, neighboring_tile.direction)
             current_tile.visited = True
             current_tile = neighboring_tile.tile
+            self.backtrack_tiles.append(current_tile)
+            print("Destroying wall...")
         
-        # No available neighboring tile, backtrack
+        # No available neighboring tile, get previous tile & remove it from backtrack tiles
+        elif self.backtrack_tiles:
+            print(len(self.backtrack_tiles))
+            current_tile = self.backtrack_tiles.pop()
+            print("Backtracking...", len(self.backtrack_tiles))
+
+        # Completely done!
         else:
-            print("Todo: backtrack, endpoint: " + str(current_tile.loc.pos_x) + " " + str(current_tile.loc.pos_y))
             return
 
         # Recursion
@@ -158,7 +168,10 @@ class Maze():
 
         # No non-visited neighboring tiles, return empty list
         if not neighboring_tiles:
+            print("No non-visited neighboring tiles!")
             return neighboring_tiles
+
+        print("Returning neighboring non-visited tile...")
 
         # Return random neighboring tile
         return choice(neighboring_tiles)
@@ -186,7 +199,7 @@ class Maze():
             tile.west_enabled = False
             dest_tile.east_enabled = False
 
-MAZE = Maze('#', '.', 10, 10)
+MAZE = Maze('#', '.', 15, 15)
 
 MAZE.generate_maze()
 
