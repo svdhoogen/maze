@@ -147,11 +147,11 @@ class Maze():
         # Do until all paths have been made
         while neighboring_tile or backtrack_tiles:
             neighboring_tile = self.__get_random_neighboring_tile(current_tile.loc.pos_x, current_tile.loc.pos_y)
+            current_tile.visited = True # Tile is now visited
 
             # Got a non-visited neighboring tile, remove walls towards tile
             if neighboring_tile:
                 self.__remove_tiling_walls(current_tile, neighboring_tile.tile, neighboring_tile.direction) # Remove walls between tiles at direction
-                current_tile.visited = True # Tile is now visited
                 current_tile = neighboring_tile.tile # Now visiting this tile
                 backtrack_tiles.append(current_tile) # Add new tile to backtrack list
             
