@@ -34,7 +34,7 @@ class Maze:
     width = None
     height = None
 
-    def __init__(self, output_path, width, height, method):
+    def __init__(self, output_path, width, height, method, image_scale):
         """Creates a new maze of size width * height and sets config options."""
 
         # Set size and width values
@@ -45,7 +45,7 @@ class Maze:
         self.__generate_maze(method)
 
         # Create maze image
-        self.__create_maze_image(output_path)
+        self.__create_maze_image(output_path, image_scale)
 
         print("Program finished!")
 
@@ -68,7 +68,7 @@ class Maze:
 
         print("Generating maze done!")
 
-    def __create_maze_image(self, output_path):
+    def __create_maze_image(self, output_path, image_scale):
         """Prints current maze to console."""
 
         print("Creating maze image...")
@@ -77,7 +77,7 @@ class Maze:
         pixels = self.__maze_to_pixels(0, 255)
 
         # Create image from pixels
-        self.__create_image(output_path, pixels, self.width * 2 + 1, self.height * 2 + 1)
+        self.__create_image(output_path, image_scale, pixels, self.width * 2 + 1, self.height * 2 + 1)
 
         print("Creating image done!")
 
@@ -123,12 +123,13 @@ class Maze:
         # Return pixels
         return pixels
 
-    def __create_image(self, path, pixels, width, height):
+    def __create_image(self, path, scale, pixels, width, height):
         """Creates image and saves it to path based on pixels and size."""
 
         # Create image from pixels
         img = Image.new('L', (width, height))
         img.putdata(pixels)
+        img = img.resize((width * scale, height * scale), Image.NEAREST)
         img.save(path)
 
     def __run_RDFS(self):
@@ -250,7 +251,7 @@ def print_program_info(error_message):
         print("Method determines the algorithm used to generate the maze, 0 being Randomized Depth First Search.")
         print("Output path being the name the file is saved as, will automatically add .png extension if not specified already.\n")
 
-    print("Arguments format: width as int, height as int, method as int and output path as string.\n")
+    print("Arguments format: output path as string, width as int, height as int, method as int and image scale as int (optional).\n")
 
 def create_maze():
     """Parses command line arguments and creates a maze if valid. This is the program entrance."""
@@ -263,40 +264,46 @@ def create_maze():
         print_program_info("")
         return
 
-    print("Parsing command line arguments...")
+    print("\nParsing command line arguments...")
 
     # Check argument count
-    if len(args) > 4:
-        print_program_info("Too many arguments! Expected exactly 4 arguments but received too many!")
+    if len(args) > 5:
+        print_program_info("Too many arguments! Expected 4 or 5 arguments, but received too many!")
         return
 
     if len(args) < 4:
-        print_program_info("Too few arguments! Expected exactly 4 arguments but received too few!")
+        print_program_info("Too few arguments! Expected 4 or 5 arguments, but received too few!")
         return
+
+    # No scale, add 1
+    if len(args) == 4:
+        args[4] = 1
 
     # Convert strings to int
     try:
         args[1] = int(args[1])
         args[2] = int(args[2])
         args[3] = int(args[3])
+        args[4] = int(args[4])
 
     # Throw errors
     except ValueError:
-        print_program_info("Value type error! Expected first three arguments as integers, but got ValueError instead!")
+        print_program_info("Value type error! Expected valid integers, but got ValueError instead!")
         return
 
     # Check if maze bigger than 0
-    if args[1] < 1 or args[2] < 1:
-        print_program_info("Size error! Width and height must be bigger than 0!")
+    if args[1] < 1 or args[2] < 1 or args[4] < 1:
+        print_program_info("Size error! Width, height and image scale must be bigger than 0!")
         return
 
     # Add .png extensions
     if not args[0].endswith(".png"):
         args[0] += ".png"
 
-    print("Command line arguments parsed succesfully! Generating maze using arguments:", args)
+    print("Command line arguments parsed succesfully! Generating maze using arguments:", args, "\n")
 
     # Arguments succesfully verified, generate maze
-    Maze(args[0], args[1], args[2], args[3])
+    Maze(args[0], args[1], args[2], args[3], args[4])
 
+# Run program entrance
 create_maze()
