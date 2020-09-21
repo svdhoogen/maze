@@ -260,7 +260,7 @@ def create_maze():
     args = sys.argv[1:]
 
     # Print help
-    if args[0] == "help" or args[0] == "-help" or args[0] == "--help":
+    if not args or args[0] == "help" or args[0] == "-help" or args[0] == "--help":
         print_program_info("")
         return
 
