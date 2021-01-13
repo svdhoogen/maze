@@ -2,15 +2,17 @@
 
 from dataclasses import dataclass
 from datetime import datetime
-from random import random, seed, getrandbits, choice, randint
+from random import seed, getrandbits, choice
 from PIL import Image
 import sys
+
 
 @dataclass
 class Point:
     """A point object, with an x and y."""
     pos_x: float
     pos_y: float
+
 
 @dataclass
 class Tile:
@@ -22,11 +24,13 @@ class Tile:
     south_wall: bool = True
     west_wall: bool = True
 
+
 @dataclass
 class NeighboringTile:
     """A neighboring tile object, has a tile object and a direction, from the perspective of the original tile, 0 being north, 1 east, 2 south and 3 west."""
     tile: Tile
     direction: int
+
 
 class Maze:
     """Generates a maze of given width and height and outputs it as an image."""
@@ -60,7 +64,7 @@ class Maze:
 
         # Run the randomized depth first search algorithm to generate a maze
         if method == 0:
-            self.__run_RDFS()
+            self.__run_rdfs()
 
         # Unknown method, log error
         else:
@@ -87,13 +91,13 @@ class Maze:
         # Contains the pixels used to create image, and image height and width
         pixels = []
 
-        # Row below is a row without tiles but only walls only calculated on the final row of tileset
+        # Row below is a row without tiles but only walls only calculated on the final row of tile-set
         final_row_pixels = []
 
         # Determine row pixel data from maze tiles
         for row in self.maze_tiles:
-            above_row_pixels = [] # Row above is a row without tiles but only walls
-            current_row_pixels = [] # Current row is a row with tiles and walls
+            above_row_pixels = []  # Row above is a row without tiles but only walls
+            current_row_pixels = []  # Current row is a row with tiles and walls
 
             # Get above, current and final row pixels
             for element in row:
@@ -123,7 +127,8 @@ class Maze:
         # Return pixels
         return pixels
 
-    def __create_image(self, path, scale, pixels, width, height):
+    @staticmethod
+    def __create_image(path, scale, pixels, width, height):
         """Creates image and saves it to path based on pixels and size."""
 
         # Create image from pixels
@@ -132,7 +137,7 @@ class Maze:
         img = img.resize((width * scale, height * scale), Image.NEAREST)
         img.save(path)
 
-    def __run_RDFS(self):
+    def __run_rdfs(self):
         """Generates a maze using the randomized depth-first search algorithm."""
 
         print("Starting depth first search!")
@@ -149,13 +154,13 @@ class Maze:
         # Do until all paths have been made
         while neighboring_tile or backtrack_tiles:
             neighboring_tile = self.__get_random_neighbor(current_tile.loc.pos_x, current_tile.loc.pos_y)
-            current_tile.visited = True # Tile is now visited
+            current_tile.visited = True  # Tile is now visited
 
             # Got a non-visited neighboring tile, remove walls towards tile
             if neighboring_tile:
-                self.__remove_walls(current_tile, neighboring_tile.tile, neighboring_tile.direction) # Remove walls between tiles at direction
-                current_tile = neighboring_tile.tile # Now visiting this tile
-                backtrack_tiles.append(current_tile) # Add new tile to backtrack list
+                self.__remove_walls(current_tile, neighboring_tile.tile, neighboring_tile.direction)  # Remove walls between tiles at direction
+                current_tile = neighboring_tile.tile  # Now visiting this tile
+                backtrack_tiles.append(current_tile)  # Add new tile to backtrack list
             
             # No non-visited neighboring tiles, backtrack (.pop() gets and removes last item)
             else:
@@ -173,25 +178,25 @@ class Maze:
         # Northern tile
         if pos_y != 0:
             new_tile = self.maze_tiles[pos_y - 1][pos_x]
-            if not new_tile.visited and not new_tile.south_wall == False and not new_tile.west_wall == False and not new_tile.east_wall == False:
+            if not new_tile.visited and new_tile.south_wall and new_tile.west_wall and new_tile.east_wall:
                 neighboring_tiles.append(NeighboringTile(new_tile, 0))
 
         # Eastern tile
         if pos_x != self.width - 1:
             new_tile = self.maze_tiles[pos_y][pos_x + 1]
-            if not new_tile.visited and not new_tile.north_wall == False and not new_tile.west_wall == False and not new_tile.south_wall == False:
+            if not new_tile.visited and new_tile.north_wall and new_tile.west_wall and new_tile.south_wall:
                 neighboring_tiles.append(NeighboringTile(new_tile, 1))
 
         # Southern tile
         if pos_y != self.height - 1:
             new_tile = self.maze_tiles[pos_y + 1][pos_x]
-            if not new_tile.visited and not new_tile.north_wall == False and not new_tile.west_wall == False and not new_tile.east_wall == False:
+            if not new_tile.visited and new_tile.north_wall and new_tile.west_wall and new_tile.east_wall:
                 neighboring_tiles.append(NeighboringTile(new_tile, 2))
         
         # Western tile
         if pos_x != 0:
             new_tile = self.maze_tiles[pos_y][pos_x - 1]
-            if not new_tile.visited and not new_tile.south_wall == False and not new_tile.north_wall == False and not new_tile.east_wall == False:
+            if not new_tile.visited and new_tile.south_wall and new_tile.north_wall and new_tile.east_wall:
                 neighboring_tiles.append(NeighboringTile(new_tile, 3))
 
         # No non-visited neighboring tiles, return empty list
@@ -201,7 +206,8 @@ class Maze:
         # Return random neighboring tile
         return choice(neighboring_tiles)
 
-    def __remove_walls(self, tile, dest_tile, direction):
+    @staticmethod
+    def __remove_walls(tile, dest_tile, direction):
         """Removes the wall between tile and neighboring tile objects."""
 
         # Destroy north wall
@@ -237,6 +243,7 @@ class Maze:
             choice(self.maze_tiles)[0].west_wall = False
             choice(self.maze_tiles)[-1].east_wall = False
 
+
 def print_program_info(error_message):
     """Prints help about maze generator usage and an optional error message, Leave error message empty for help."""
 
@@ -252,6 +259,7 @@ def print_program_info(error_message):
         print("Output path being the name the file is saved as, will automatically add .png extension if not specified already.\n")
 
     print("Arguments format: output path as string, width as int, height as int, method as int and image scale as int (optional).\n")
+
 
 def create_maze():
     """Parses command line arguments and creates a maze if valid. This is the program entrance."""
@@ -277,7 +285,7 @@ def create_maze():
 
     # No scale, add 1
     if len(args) == 4:
-        args[4] = 1
+        args.append(1)
 
     # Convert strings to int
     try:
@@ -300,10 +308,11 @@ def create_maze():
     if not args[0].endswith(".png"):
         args[0] += ".png"
 
-    print("Command line arguments parsed succesfully! Generating maze using arguments:", args, "\n")
+    print("Command line arguments parsed successfully! Generating maze using arguments:", args, "\n")
 
-    # Arguments succesfully verified, generate maze
+    # Arguments successfully verified, generate maze
     Maze(args[0], args[1], args[2], args[3], args[4])
+
 
 # Run program entrance
 create_maze()
