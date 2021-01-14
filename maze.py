@@ -161,7 +161,7 @@ class Maze:
                 self.__remove_walls(current_tile, neighboring_tile.tile, neighboring_tile.direction)  # Remove walls between tiles at direction
                 current_tile = neighboring_tile.tile  # Now visiting this tile
                 backtrack_tiles.append(current_tile)  # Add new tile to backtrack list
-            
+
             # No non-visited neighboring tiles, backtrack (.pop() gets and removes last item)
             else:
                 current_tile = backtrack_tiles.pop()
@@ -172,7 +172,7 @@ class Maze:
 
     def __get_random_neighbor(self, pos_x, pos_y):
         """Returns a random neighboring tile based on x and y coords."""
-        
+
         neighboring_tiles = []
 
         # Northern tile
@@ -192,7 +192,7 @@ class Maze:
             new_tile = self.maze_tiles[pos_y + 1][pos_x]
             if not new_tile.visited and new_tile.north_wall and new_tile.west_wall and new_tile.east_wall:
                 neighboring_tiles.append(NeighboringTile(new_tile, 2))
-        
+
         # Western tile
         if pos_x != 0:
             new_tile = self.maze_tiles[pos_y][pos_x - 1]
